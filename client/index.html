@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="img/logo.png">
+    <title>Chat</title>
+    <script type="module">
+        import {io} from 'https://cdn.socket.io/4.3.2/socket.io.esm.min.js'
+
+        const getUsername = async ()=>{
+            const username = localStorage.getItem('username')
+            if (username) {
+                console.log(`User existed ${username}`)
+                return username
+            }
+        
+
+        
+        
+        const res = await fetch('https://random-data-api.com/api/users/random_user')
+        const {username:randomUsername}=await res.json();
+
+        console.log('random', randomUsername)
+
+        localStorage.setItem('username',randomUsername)
+        return randomUsername
+
+        }
+
+        const socket = io({
+            auth: {
+                username: await getUsername(), // Usa 'await' aquí
+                serverOffset: 0
+            }
+        })
+        
+
+        const form = document.getElementById('form')
+        const input = document.getElementById('input')
+        const messages = document.getElementById('messages')
+
+
+        socket.on('chat message',(msg, serverOffset,username)=>{
+            const item = `<li>
+                <p>${msg}</p>
+            <small>${username}</small>
+        </li>`
+            messages.insertAdjacentHTML('beforeend', item)
+            socket.auth.serverOffset = serverOffset
+
+            messages.scrollTop = messages.scrollHeight
+        })
+
+        form.addEventListener('submit', (e)=>{
+            e.preventDefault()
+
+            if(input.value){
+                socket.emit('chat message', input.value)
+                input.value=''
+            }
+        })
+
+    </script>
+    <style>
+        #messages {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow-y: scroll;
+            height: 100%;
+            scroll-behavior: smooth;
+            padding-bottom: 48px;
+            background: #1e1e1e;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    
+        #messages > li {
+            padding: .8rem 1.2rem;
+            margin: .2rem 0;
+            border-radius: 8px;
+            background-color: #333;
+            color: #fff;
+            transition: background-color 0.3s ease;
+        }
+    
+        #messages > li:nth-child(odd) {
+            background-color: #444;
+        }
+    
+        #messages > li:hover {
+            background-color: #555;
+        }
+    
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+    
+        :root {
+            color-scheme: dark;
+        }
+    
+        body {
+            margin: 0;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            display: grid;
+            place-content: center;
+            height: 100vh;
+            padding: 36px 36px 100px 36px;
+            grid-template-rows: 1fr;
+            background: #121212;
+        }
+    
+        #chat {
+            border: 1px solid #444;
+            border-radius: 8px;
+            overflow: hidden;
+            width: 350px;
+            height: 100%;
+            position: relative;
+            background: #181818;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+    
+        #form {
+            bottom: 0;
+            display: flex;
+            height: 48px;
+            left: 0;
+            padding: 4px;
+            position: absolute;
+            right: 0;
+            background: #242424;
+            border-top: 1px solid #333;
+        }
+    
+        #input {
+            border-radius: 50px;
+            border: 1px solid #555;
+            flex: 1;
+            margin: 4px;
+            padding: 0 12px;
+            background: #333;
+            color: #fff;
+            font-size: 1rem;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+    
+        #input:focus {
+            outline: 0;
+            background: #444;
+            border-color: #09f;
+        }
+    
+        #form > button {
+            background: #09f;
+            color: #fff;
+            border: 0;
+            margin: 4px;
+            border-radius: 50px;
+            padding: 0 16px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+    
+        #form > button:hover {
+            background: #0cf;
+            transform: translateY(-2px);
+        }
+    
+        #form > button:active {
+            transform: translateY(2px);
+        }
+    
+    </style>
+    
+</head>
+<body>
+    <section id="chat">
+        <ul id="messages"></ul>
+        <form id="form">
+            <input type="text" name="message" id="input" placeholder="Type a message"
+            autocomplete="off"/>
+            <button type="submit">Enviar</button>
+        </form>
+
+    </section>
+    
+</body>
+</html>
